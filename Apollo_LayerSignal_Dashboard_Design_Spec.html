@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=720">
+<title>Apollo &amp; LayerSignal Unified Dashboard - Design Specification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@page {
+    size: 720px 1020px;
+    margin: 0;
+}
+:root {
+    --bg-deepest: #0B1120;
+    --bg-deep: #111827;
+    --bg-mid: #1E293B;
+    --bg-elevated: #334155;
+    --bg-surface: #475569;
+    --text-primary: #F1F5F9;
+    --text-secondary: #CBD5E1;
+    --text-tertiary: #94A3B8;
+    --text-muted: #64748B;
+    --green: #22C55E;
+    --red: #EF4444;
+    --amber: #F59E0B;
+    --blue: #3B82F6;
+    --purple: #A78BFA;
+    --teal: #2DD4BF;
+    --accent: #3B82F6;
+    --border: #1E293B;
+    --border-light: #334155;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+    margin: 0; padding: 0;
+    width: 720px;
+    background: var(--bg-deepest);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+@media screen {
+    html { height: auto; display: flex; justify-content: center; background: #060a14; }
+    body { transform-origin: top center; margin: 20px auto; }
+}
+p, td, li, .body-text, .card-body { overflow-wrap: break-word; word-break: break-word; hyphens: auto; }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border-light); font-size: 9.5px; line-height: 1.4; vertical-align: top; }
+th { background: var(--bg-mid); color: var(--text-secondary); font-weight: 600; font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; }
+td { color: var(--text-secondary); }
+tr:nth-child(even) td { background: rgba(30,41,59,0.3); }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Cover */
+.cover {
+    width: 720px; height: 1020px; box-sizing: border-box;
+    break-after: page; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--bg-deepest);
+    position: relative;
+    padding: 60px;
+}
+.cover::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+        linear-gradient(rgba(59,130,246,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+.cover::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--blue), var(--teal), var(--purple));
+}
+.cover-tag {
+    font-size: 10px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--blue); margin-bottom: 24px; position: relative; z-index: 1;
+}
+.cover-title {
+    font-size: 32px; font-weight: 800; line-height: 1.15; text-align: center;
+    color: var(--text-primary); position: relative; z-index: 1; margin-bottom: 16px;
+}
+.cover-sub {
+    font-size: 13px; color: var(--text-tertiary); text-align: center; line-height: 1.6;
+    position: relative; z-index: 1; margin-bottom: 40px; max-width: 480px;
+}
+.cover-stats {
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+    position: relative; z-index: 1;
+}
+.cover-stat {
+    background: var(--bg-mid); border: 1px solid var(--border-light); border-radius: 8px;
+    padding: 16px 20px; min-width: 130px; text-align: center;
+}
+.cover-stat-val { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; color: var(--blue); }
+.cover-stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+.cover-bottom {
+    position: absolute; bottom: 30px; left: 0; right: 0; text-align: center;
+    font-size: 9px; color: var(--text-muted); letter-spacing: 1px; z-index: 1;
+}
+
+/* Main Content */
+.main-content { padding: 50px 55px 40px 55px; }
+
+/* Chapter Headers */
+.chapter-header { break-after: avoid; break-inside: avoid; margin-top: 26px; margin-bottom: 14px; }
+.chapter-header:first-child { margin-top: 0; }
+.section-tag {
+    font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--blue); margin-bottom: 6px;
+}
+.section-title {
+    font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1.2;
+}
+.divider { width: 40px; height: 3px; background: var(--blue); border-radius: 2px; margin-top: 10px; pointer-events: none; }
+
+/* Body Text */
+.body-text { color: var(--text-secondary); font-size: 11px; line-height: 1.6; margin-bottom: 10px; }
+.body-text strong { color: var(--text-primary); font-weight: 600; }
+
+/* Cards */
+.card {
+    background: var(--bg-deep); border: 1px solid var(--border-light); border-radius: 8px;
+    padding: 14px 16px; margin-bottom: 10px; break-inside: avoid;
+}
+.card-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
+.card-title { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; line-height: 1.3; }
+.card-body { font-size: 10.5px; color: var(--text-tertiary); line-height: 1.55; }
+
+/* Card Grid */
+.card-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.card-grid-3 { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.card-grid-3 > .card { flex: 1 1 180px; min-width: 180px; }
+
+/* Color Swatches */
+.swatch-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.swatch { display: flex; align-items: center; gap: 6px; }
+.swatch-box { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-light); }
+.swatch-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-tertiary); }
+
+/* Wireframe */
+.wireframe {
+    border: 1px dashed var(--border-light); border-radius: 6px; padding: 10px; margin-bottom: 12px;
+    background: rgba(17,24,39,0.5); break-inside: avoid;
+}
+.wireframe-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.wireframe-box {
+    border: 1px dashed var(--bg-surface); border-radius: 4px; padding: 6px 8px;
+    font-size: 8.5px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    min-height: 24px;
+}
+.wireframe-box.accent { border-color: var(--blue); color: var(--blue); }
+.wireframe-box.green { border-color: var(--green); color: var(--green); }
+.wireframe-box.amber { border-color: var(--amber); color: var(--amber); }
+
+/* Subheading */
+.sub-heading { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 16px; margin-bottom: 8px; }
+.sub-heading-2 { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-top: 12px; margin-bottom: 6px; }
+
+/* Badge */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 8.5px; font-weight: 600; letter-spacing: 0.3px; }
+.badge-blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+.badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
+.badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+.badge-amber { background: rgba(245,158,11,0.15); color: var(--amber); }
+.badge-purple { background: rgba(167,139,250,0.15); color: var(--purple); }
+.badge-teal { background: rgba(45,212,191,0.15); color: var(--teal); }
+
+/* Decision Card */
+.decision-card {
+    background: var(--bg-deep); border-left: 3px solid var(--blue); border-radius: 0 8px 8px 0;
+    padding: 12px 14px; margin-bottom: 10px; break-inside: avoid;
+}
+.decision-card.green-border { border-left-color: var(--green); }
+.decision-card.amber-border { border-left-color: var(--amber); }
+.decision-card.purple-border { border-left-color: var(--purple); }
+.decision-card.teal-border { border-left-color: var(--teal); }
+.decision-card .card-title { margin-bottom: 4px; }
+.decision-meta { font-size: 9px; color: var(--text-muted); margin-bottom: 6px; }
+
+/* Ending */
+.ending {
+    width: 720px; height: 1020px; box-sizing: border-box;
+    break-before: page; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--bg-deepest); position: relative; padding: 60px;
+}
+.ending::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+        linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+.ending-text {
+    font-size: 20px; font-weight: 700; color: var(--text-primary); text-align: center;
+    line-height: 1.8; position: relative; z-index: 1;
+}
+.ending-text .highlight { color: var(--blue); font-family: 'JetBrains Mono', monospace; }
+
+/* Mini table for lists */
+.mini-table { margin-bottom: 12px; }
+.mini-table th { font-size: 8px; padding: 5px 6px; }
+.mini-table td { font-size: 9px; padding: 4px 6px; }
+
+/* Tier bar */
+.tier-bar { display: flex; gap: 2px; height: 6px; border-radius: 3px; overflow: hidden; margin: 6px 0; }
+.tier-segment { height: 100%; border-radius: 3px; }
+
+/* Pill row */
+.pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.pill {
+    padding: 3px 10px; border-radius: 12px; font-size: 8.5px; font-weight: 500;
+    border: 1px solid var(--border-light); color: var(--text-tertiary);
+    background: var(--bg-mid);
+}
+
+/* Hierarchy diagram */
+.hierarchy { margin: 10px 0; break-inside: avoid; }
+.h-level { margin-left: 0; border-left: 2px solid var(--border-light); padding-left: 12px; margin-bottom: 4px; }
+.h-level-2 { margin-left: 16px; }
+.h-level-3 { margin-left: 32px; }
+.h-item { font-size: 9.5px; color: var(--text-tertiary); padding: 2px 0; }
+.h-item strong { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+
+<div class="cover">
+    <div class="cover-tag">UI/UX Design Specification</div>
+    <div class="cover-title">Apollo &amp; LayerSignal<br>Unified Dashboard</div>
+    <div class="cover-sub">A comprehensive design specification for the next-generation trading dashboard that unifies Apollo backtesting and LayerSignal live scanning into a single, information-dense interface.</div>
+    <div class="cover-stats">
+        <div class="cover-stat">
+            <div class="cover-stat-val">101</div>
+            <div class="cover-stat-label">Features</div>
+        </div>
+        <div class="cover-stat">
+            <div class="cover-stat-val">7</div>
+            <div class="cover-stat-label">Tabs</div>
+        </div>
+        <div class="cover-stat">
+            <div class="cover-stat-val">26</div>
+            <div class="cover-stat-label">SQLite Tables</div>
+        </div>
+        <div class="cover-stat">
+            <div class="cover-stat-val">2</div>
+            <div class="cover-stat-label">Engines</div>
+        </div>
+    </div>
+    <div class="cover-bottom">CONFIDENTIAL -- INTERNAL DESIGN DOCUMENT -- v1.0</div>
+</div>
+
+<div class="main-content">
+<div class="chapter-header">
+    <div class="section-tag">Chapter 1</div>
+    <div class="section-title">Design Philosophy</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The Apollo-LayerSignal Unified Dashboard is designed for a power user who needs to process hundreds of data points across thousands of stocks in real time. Every design decision prioritizes rapid signal recognition over aesthetic minimalism. The interface must feel like a command center, not a marketing page. The following five principles guide every layout, color, and interaction choice in this specification.</div>
+<div class="card-grid-2">
+    <div class="card">
+        <div class="card-label">Principle 01</div>
+        <div class="card-title">Progressive Disclosure, Not Progressive Reduction</div>
+        <div class="card-body">The dashboard shows maximum relevant information at the top level. Detail is revealed through expand, hover, and drill-down rather than being hidden behind navigation. A trader scanning 340 stocks in the Screener tab should see every signal-bearing column without clicking. Rows expand in-place for pool breakdowns and gate details. The philosophy is: show everything that matters, collapse only what is context-dependent.</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Principle 02</div>
+        <div class="card-title">Signal-First Visual Grammar</div>
+        <div class="card-body">Every data point is encoded as a visual signal: badges for states (Entry, Exit, Hold), color-coded RSI values, micro-dot gate indicators, and proximity bars for 52-week positioning. The eye should parse the table row in under 2 seconds without reading a single number. This means badges, color fills, and positional encodings take precedence over raw numeric displays. Numbers appear on hover or in expanded rows.</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Principle 03</div>
+        <div class="card-title">Zero-Context Comprehension</div>
+        <div class="card-body">A new user opening any tab should understand what they are looking at within 10 seconds. Every column header has a tooltip explaining its origin (Apollo, LayerSignal, or computed). Every badge is self-labeling. The color system maps to a fixed semantic vocabulary: green for bullish signals, red for bearish, amber for caution, blue for informational, purple for Apollo-specific, teal for system status. No legend should be required to interpret the primary view.</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Principle 04</div>
+        <div class="card-title">Spatial Proximity of Related Signals</div>
+        <div class="card-body">Data that is analyzed together must be displayed together. In the Watchlist, the three-column layout places the stock list, primary analysis, and deep-dive accordion panels side by side. The RSI Stack, RSI Cushion, and RSI Comparison accordion sections are adjacent because a trader evaluates them as a group. This principle rejects the common pattern of burying related data across multiple pages or modal dialogs.</div>
+    </div>
+</div>
+<div class="card" style="max-width: 340px; margin: 0 auto 10px auto;">
+    <div class="card-label">Principle 05</div>
+    <div class="card-title">Engine Neutrality with Unified Context</div>
+    <div class="card-body">The user should not need to know whether a signal came from Apollo or LayerSignal. Both engines write to the same SQLite database. The dashboard reads from that database and presents a unified view. However, engine provenance is available on hover (via tooltip) and in the System tab for debugging. The tab structure is task-based (Screener, Watchlist, Scanner) rather than engine-based (Apollo, LayerSignal), a deliberate departure from the architecture document.</div>
+</div>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 2</div>
+    <div class="section-title">Information Architecture</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The dashboard is organized into seven task-based tabs. Each tab maps to a distinct trader workflow. The priority levels (P0, P1, P2) determine the implementation order, with P0 tabs forming the minimum viable dashboard. A critical architectural decision was made: the tabs follow task-based organization, not engine-based workspaces. The user thinks in terms of "scan my universe" and "check my watchlist," not "use Apollo" and "use LayerSignal." This is a deliberate departure from the architecture document which proposed an engine-mode toggle.</div>
+<div class="sub-heading">Tab Structure</div>
+<table class="mini-table">
+    <tr><th>Tab</th><th>Priority</th><th>Purpose</th><th>Primary Engine</th></tr>
+    <tr><td><strong>Screener</strong></td><td><span class="badge badge-green">P0</span></td><td>Universe-wide signal scanning across all stocks</td><td>Both</td></tr>
+    <tr><td><strong>Watchlist</strong></td><td><span class="badge badge-green">P0</span></td><td>Monitored stock deep dives with full analysis</td><td>Both</td></tr>
+    <tr><td><strong>Scanner</strong></td><td><span class="badge badge-amber">P1</span></td><td>Full market pattern scan with presets</td><td>LayerSignal</td></tr>
+    <tr><td><strong>Analytics</strong></td><td><span class="badge badge-green">P0</span></td><td>Backtest results, profiles, walk-forward validation</td><td>Apollo</td></tr>
+    <tr><td><strong>Guidance</strong></td><td><span class="badge badge-amber">P1</span></td><td>Post-trade behavior analysis and recommendations</td><td>Apollo</td></tr>
+    <tr><td><strong>Alerts</strong></td><td><span class="badge badge-green">P0</span></td><td>Chronological cross-engine alert feed</td><td>Both</td></tr>
+    <tr><td><strong>System</strong></td><td><span class="badge badge-purple">P2</span></td><td>Engine health, data quality, configuration</td><td>System</td></tr>
+</table>
+<div class="sub-heading">Navigation Hierarchy</div>
+<div class="hierarchy">
+    <div class="h-item"><strong>App Bar</strong> -- Logo, Global Search, Alert Bell, Engine Health, Settings</div>
+    <div class="h-level">
+        <div class="h-item"><strong>Tab Bar</strong> -- 7 tabs (persistent navigation)</div>
+        <div class="h-level h-level-2">
+            <div class="h-item"><strong>Screener</strong> -- Filter Sidebar | Universe Funnel | Stock Table | Expanded Rows</div>
+            <div class="h-item"><strong>Watchlist</strong> -- Stock List | Center Panel (Chart/Analysis/Holdings) | Detail Accordion</div>
+            <div class="h-item"><strong>Scanner</strong> -- Pattern Presets | Filter Sidebar | Result Table</div>
+            <div class="h-item"><strong>Analytics</strong> -- Trade Engine | Profiles | Walk-Forward | Cross-Report | Fundamentals</div>
+            <div class="h-item"><strong>Guidance</strong> -- Stock Selector | Behavioral Profile | Recommendations | MAE/MFE</div>
+            <div class="h-item"><strong>Alerts</strong> -- Filter Bar | Chronological Alert Feed</div>
+            <div class="h-item"><strong>System</strong> -- Engine Cards | API Endpoints | Score Distribution</div>
+        </div>
+    </div>
+    <div class="h-item"><strong>Market Regime Banner</strong> -- BULLISH/NEUTRAL/BEARISH/VOLATILE + NIFTY + VIX</div>
+    <div class="h-item"><strong>Content Area</strong> -- Tab-specific content renders here</div>
+    <div class="h-item"><strong>Ticker Footer</strong> -- 14 scrolling index values</div>
+</div>
+<div class="body-text">The task-based tab structure means a trader never has to think about which engine generated a signal. The Screener table seamlessly mixes Apollo's bucket classification and conviction scores with LayerSignal's RSI stacks and Renko signals. The Alerts feed interweaves entries from both engines chronologically. Only the System tab exposes engine internals, and only for debugging purposes.</div>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 3</div>
+    <div class="section-title">Design System</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The design system defines the visual vocabulary used across all 7 tabs. Every color, typeface, and component is chosen to maximize information density while maintaining legibility. The dark blue theme (not gray) was chosen to reduce eye strain during extended trading sessions and to provide a distinctive identity that separates this dashboard from generic gray-dark UIs.</div>
+
+<div class="sub-heading">Background Tiers (5 Levels)</div>
+<div class="swatch-row">
+    <div class="swatch"><div class="swatch-box" style="background:#0B1120;"></div><div class="swatch-label">#0B1120 Deepest</div></div>
+    <div class="swatch"><div class="swatch-box" style="background:#111827;"></div><div class="swatch-label">#111827 Deep</div></div>
+    <div class="swatch"><div class="swatch-box" style="background:#1E293B;"></div><div class="swatch-label">#1E293B Mid</div></div>
+    <div class="swatch"><div class="swatch-box" style="background:#334155;"></div><div class="swatch-label">#334155 Elevated</div></div>
+    <div class="swatch"><div class="swatch-box" style="background:#475569;"></div><div class="swatch-label">#475569 Surface</div></div>
+</div>
+<div class="body-text">Tier 0 (#0B1120) is the body background. Tier 1 (#111827) is the default card and panel background. Tier 2 (#1E293B) is for table headers, borders, and subtle elevation. Tier 3 (#334155) is for interactive elements, hover states, and wireframe borders. Tier 4 (#475569) is the lightest surface, used for disabled states and background fills.</div>
+
+<div class="sub-heading">Text Hierarchy (4 Levels)</div>
+<table class="mini-table">
+    <tr><th>Level</th><th>Color</th><th>Usage</th><th>Contrast Ratio</th></tr>
+    <tr><td style="color:#F1F5F9;font-weight:600;">Primary</td><td class="mono" style="color:#F1F5F9;">#F1F5F9</td><td>Headings, stat numbers, titles</td><td>15.4:1</td></tr>
+    <tr><td style="color:#CBD5E1;">Secondary</td><td class="mono" style="color:#CBD5E1;">#CBD5E1</td><td>Body text, table cell content</td><td>10.2:1</td></tr>
+    <tr><td style="color:#94A3B8;">Tertiary</td><td class="mono" style="color:#94A3B8;">#94A3B8</td><td>Labels, descriptions, metadata</td><td>6.1:1</td></tr>
+    <tr><td style="color:#64748B;">Muted</td><td class="mono" style="color:#64748B;">#64748B</td><td>Timestamps, micro-labels, hints</td><td>3.8:1</td></tr>
+</table>
+
+<div class="sub-heading">Semantic Signal Colors</div>
+<div class="swatch-row">
+    <div class="swatch"><div class="swatch-box" style="background:#22C55E;"></div><div class="swatch-label">Green Bullish</div></div>
+    <div class="swatch"><div class="swatch-box" style="background:#EF4444;"></div><div class="swatch-label">Red Bearish</div></div>
+    <div class="swatch"><div class="swatch-box" style="background:#F59E0B;"></div><div class="swatch-label">Amber Caution</div></div>
+    <div class="swatch"><div class="swatch-box" style="background:#3B82F6;"></div><div class="swatch-label">Blue Info</div></div>
+    <div class="swatch"><div class="swatch-box" style="background:#A78BFA;"></div><div class="swatch-label">Purple Apollo</div></div>
+    <div class="swatch"><div class="swatch-box" style="background:#2DD4BF;"></div><div class="swatch-label">Teal System</div></div>
+</div>
+<div class="body-text">The RSI indicator colors are locked from LayerSignal v21 and must not be changed: RSI21 displays in green, RSI36 in blue, and RSI56 in amber. These colors are burned into trader muscle memory from months of LayerSignal usage and any change would cause confusion. The purple color is reserved for Apollo-specific elements (backtest profiles, walk-forward results, conviction scores) to provide subtle engine provenance without breaking the unified interface.</div>
+
+<div class="sub-heading">Typography Scale (10 Roles)</div>
+<table class="mini-table">
+    <tr><th>Role</th><th>Font</th><th>Size</th><th>Weight</th><th>Usage</th></tr>
+    <tr><td>Stat Number</td><td class="mono">JetBrains Mono</td><td class="mono">22-28px</td><td>700</td><td>Dashboard stat cards, large metrics</td></tr>
+    <tr><td>Chapter Title</td><td>Inter</td><td class="mono">20-24px</td><td>800</td><td>Tab titles, chapter headings</td></tr>
+    <tr><td>Section Heading</td><td>Inter</td><td class="mono">14-16px</td><td>700</td><td>Sub-section titles within tabs</td></tr>
+    <tr><td>Sub-heading</td><td>Inter</td><td class="mono">12-13px</td><td>600</td><td>Card titles, group labels</td></tr>
+    <tr><td>Body Text</td><td>Inter</td><td class="mono">11px</td><td>400</td><td>Paragraph text, descriptions</td></tr>
+    <tr><td>Table Cell</td><td>Inter</td><td class="mono">10-10.5px</td><td>400</td><td>Table data cells</td></tr>
+    <tr><td>Badge / Chip</td><td>Inter</td><td class="mono">8.5-9px</td><td>600</td><td>Status badges, filter pills</td></tr>
+    <tr><td>Data Value</td><td class="mono">JetBrains Mono</td><td class="mono">11-13px</td><td>500</td><td>Numeric values in tables and cards</td></tr>
+    <tr><td>Table Header</td><td>Inter</td><td class="mono">8-8.5px</td><td>600</td><td>Column headers, uppercase</td></tr>
+    <tr><td>Micro Label</td><td>Inter</td><td class="mono">9px</td><td>500</td><td>Timestamps, tiny metadata</td></tr>
+</table>
+
+<div class="sub-heading">Component Library (11 Components)</div>
+<table class="mini-table">
+    <tr><th>Component</th><th>Description</th><th>Used In</th></tr>
+    <tr><td><strong>Badge</strong></td><td>Color-coded pill showing state (Entry, Exit, Hold, L1-L4)</td><td>All tabs</td></tr>
+    <tr><td><strong>FlagChip</strong></td><td>Small chip displaying a binary flag with on/off styling</td><td>Screener, Watchlist</td></tr>
+    <tr><td><strong>StatCard</strong></td><td>Elevated card with large number, label, and optional delta</td><td>Watchlist, Analytics, System</td></tr>
+    <tr><td><strong>MetricBadge</strong></td><td>Compact badge pairing a label with a numeric value</td><td>Screener, Watchlist</td></tr>
+    <tr><td><strong>ProximityBar</strong></td><td>Horizontal bar showing position within a range (e.g., 52-week)</td><td>Screener, Watchlist</td></tr>
+    <tr><td><strong>Sparkline</strong></td><td>30-day miniature line chart embedded in table rows</td><td>Screener, Watchlist list</td></tr>
+    <tr><td><strong>MiniGauge</strong></td><td>Arc or radial gauge showing a percentage or score</td><td>System, Analytics</td></tr>
+    <tr><td><strong>SortableTable</strong></td><td>Full-featured table with column sorting, sticky header, expand rows</td><td>Screener, Scanner, Analytics</td></tr>
+    <tr><td><strong>FilterPill</strong></td><td>Toggle pill for quick filtering (active/inactive states)</td><td>Screener, Watchlist, Alerts</td></tr>
+    <tr><td><strong>AccordionPanel</strong></td><td>Collapsible section with chevron toggle and content area</td><td>Watchlist, Guidance</td></tr>
+    <tr><td><strong>Tooltip</strong></td><td>Hover-activated info panel showing definition and source engine</td><td>All tabs</td></tr>
+</table>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 4</div>
+    <div class="section-title">Global Shell Layout</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The global shell wraps every tab in a consistent frame. From top to bottom, the shell consists of five zones: the App Bar, Tab Bar, Market Regime Banner, Content Area, and Ticker Footer. These zones are always visible regardless of which tab is active. The total chrome height is approximately 134 pixels (46 + 36 + 24 + 28 for the footer), leaving the content area to fill the remaining viewport height.</div>
+
+<div class="sub-heading">Shell Wireframe</div>
+<div class="wireframe">
+    <div class="wireframe-row">
+        <div class="wireframe-box accent" style="flex:1;">APP BAR (46px) -- Logo | Global Search | Alert Bell | Engine Health | Settings</div>
+    </div>
+    <div class="wireframe-row">
+        <div class="wireframe-box green" style="flex:1;">TAB BAR (36px) -- Screener | Watchlist | Scanner | Analytics | Guidance | Alerts | System</div>
+    </div>
+    <div class="wireframe-row">
+        <div class="wireframe-box amber" style="flex:1;">MARKET REGIME BANNER (24px) -- BULLISH | NIFTY 24,580 +1.2% | VIX 13.4</div>
+    </div>
+    <div class="wireframe-row">
+        <div class="wireframe-box" style="flex:1; min-height:80px;">CONTENT AREA (fills remaining viewport) -- Tab-specific content renders here</div>
+    </div>
+    <div class="wireframe-row">
+        <div class="wireframe-box" style="flex:1;">TICKER FOOTER (28px) -- NIFTY | BANKNIFTY | FINNIFTY | MIDCAP | SMLCAP | ... (14 indices)</div>
+    </div>
+</div>
+
+<div class="sub-heading">App Bar Components</div>
+<div class="body-text">The App Bar is fixed at 46px height with a background of #0B1120 (deepest tier). It contains five elements from left to right: (1) the Apollo + LayerSignal logo mark, a compact icon that reinforces the unified brand; (2) a Global Search input that searches across symbols, features, and settings; (3) an Alert Bell icon with a red dot indicator showing unread alert count; (4) an Engine Health indicator showing green/amber/red dots for both engines; and (5) a Settings gear icon opening a preferences panel.</div>
+
+<div class="sub-heading">Market Regime Banner</div>
+<div class="body-text">The Market Regime Banner sits directly below the Tab Bar and spans the full width. It displays three pieces of information: the current market regime (BULLISH in green, NEUTRAL in blue, BEARISH in red, VOLATILE in amber), the NIFTY 50 index value with daily change percentage, and the India VIX value. The regime is computed by Apollo's regime detection module and stored in the cross_report table. This banner provides instant context for interpreting all signals below it.</div>
+
+<div class="sub-heading">Ticker Footer</div>
+<div class="body-text">The footer is a 28px tall bar at the bottom of the viewport showing 14 scrolling index values: NIFTY 50, BANK NIFTY, NIFTY FIN SERVICE, NIFTY IT, NIFTY MIDCAP 100, NIFTY SMLCAP 250, INDIA VIX, NIFTY PHARMA, NIFTY AUTO, NIFTY METAL, NIFTY ENERGY, NIFTY PSU BANK, NIFTY REALTY, and NIFTY MEDIA. Values are pulled from the indices table in SQLite and updated by the NSE data feed engine. The ticker auto-scrolls horizontally when all 14 indices cannot fit in the viewport width.</div>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 5</div>
+    <div class="section-title">Tab 1 -- Screener (P0)</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The Screener is the primary landing tab and the highest-traffic view in the dashboard. It presents the entire tradable universe (approximately 2400 stocks) filtered through a multi-stage funnel down to the most actionable signals. The layout is a classic master-detail pattern: a 25% width filter sidebar on the left and a 75% width content area on the right containing the funnel summary and sortable stock table.</div>
+
+<div class="sub-heading">Screener Layout Wireframe</div>
+<div class="wireframe">
+    <div class="wireframe-row">
+        <div class="wireframe-box accent" style="flex:0 0 25%; min-height:160px;">FILTER SIDEBAR<br>Universe Select<br>Bucket Filter<br>Action Filter<br>L-Stage Filter<br>EL Status<br>Score Range<br>MCap Range<br>Quick Presets</div>
+        <div style="flex:0 0 8px;"></div>
+        <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+            <div class="wireframe-box green" style="min-height:24px;">FUNNEL: 2400 Universe &gt; 1800 Liquid &gt; 1200 Scored &gt; 340 Signal-Bearing | Tier Distribution: L1:45 L2:82 L3:120 L4:93</div>
+            <div class="wireframe-box" style="min-height:110px;">SORTABLE TABLE -- 20+ columns<br># | Symbol | Score | Action | Bucket | L-Stage | EL Status | Conviction | Gates | Renko | RSI21 | RSI36 | RSI56 | ADX | ATR% | 52W Pos | MCap | PE | FQS | Sparkline<br>--- expandable rows for pool breakdown and gate details ---</div>
+        </div>
+    </div>
+</div>
+
+<div class="sub-heading">Universe Funnel Summary</div>
+<div class="body-text">Above the main table, a horizontal bar shows the four-stage universe funnel. Starting from the full universe (approximately 2400 stocks from the F&O segment and NSE broad market), the funnel shows how many stocks pass each filter stage: liquid stocks (those with sufficient trading volume, typically around 1800), scored stocks (those that pass Apollo's scoring pipeline, typically around 1200), and signal-bearing stocks (those with an active Entry, Exit, or Hold action, typically 200-400 depending on market conditions). Each stage is clickable to filter the table to that subset.</div>
+<div class="body-text">Adjacent to the funnel, a tier distribution summary shows the count of stocks in each LayerSignal bucket (L1 through L4). This gives an immediate sense of market breadth: a market with many L1 and L2 stocks suggests broad bullish momentum, while a market dominated by L4 stocks suggests defensive positioning is warranted.</div>
+
+<div class="sub-heading">Screener Table Columns (20+)</div>
+<table class="mini-table">
+    <tr><th>#</th><th>Column</th><th>Type</th><th>Source</th><th>Description</th></tr>
+    <tr><td>1</td><td>#</td><td>Index</td><td>UI</td><td>Row number for reference</td></tr>
+    <tr><td>2</td><td>Symbol</td><td>Text</td><td>Both</td><td>NSE trading symbol, bold, clickable to Watchlist</td></tr>
+    <tr><td>3</td><td>Score</td><td>StatCard</td><td>Apollo</td><td>Composite entry score (0-100), color-coded by tier</td></tr>
+    <tr><td>4</td><td>Action</td><td>Badge</td><td>Apollo</td><td>Entry (green), Exit (red), Hold (amber), None (muted)</td></tr>
+    <tr><td>5</td><td>Bucket</td><td>Badge</td><td>LayerSignal</td><td>L1 (green), L2 (blue), L3 (amber), L4 (red)</td></tr>
+    <tr><td>6</td><td>L-Stage</td><td>Text</td><td>LayerSignal</td><td>LayerSignal stage label from scan results</td></tr>
+    <tr><td>7</td><td>EL Status</td><td>FlagChip</td><td>Apollo</td><td>Entry Layer reached (EL1-EL4) or not</td></tr>
+    <tr><td>8</td><td>Conviction</td><td>MetricBadge</td><td>Apollo</td><td>Conviction score (0.0-1.0) with strength indicator</td></tr>
+    <tr><td>9</td><td>Gates</td><td>Micro-dots</td><td>Apollo</td><td>5 binary gate indicators as colored dots</td></tr>
+    <tr><td>10</td><td>Renko</td><td>Badge</td><td>LayerSignal</td><td>Current Renko brick color and trend</td></tr>
+    <tr><td>11</td><td>RSI21</td><td>Color value</td><td>LayerSignal</td><td>21-period RSI, colored green</td></tr>
+    <tr><td>12</td><td>RSI36</td><td>Color value</td><td>LayerSignal</td><td>36-period RSI, colored blue</td></tr>
+    <tr><td>13</td><td>RSI56</td><td>Color value</td><td>LayerSignal</td><td>56-period RSI, colored amber</td></tr>
+    <tr><td>14</td><td>ADX</td><td>Data</td><td>LayerSignal</td><td>Average Directional Index value</td></tr>
+    <tr><td>15</td><td>ATR%</td><td>Data</td><td>LayerSignal</td><td>ATR as percentage of price (volatility)</td></tr>
+    <tr><td>16</td><td>52W Pos</td><td>ProximityBar</td><td>Computed</td><td>52-week high/low position as horizontal bar</td></tr>
+    <tr><td>17</td><td>MCap</td><td>Data</td><td>Apollo</td><td>Market capitalization category (Large/Mid/Small)</td></tr>
+    <tr><td>18</td><td>PE</td><td>Data</td><td>Apollo</td><td>Price-to-earnings ratio from fundamentals</td></tr>
+    <tr><td>19</td><td>FQS</td><td>Badge</td><td>Apollo</td><td>Fundamental Quality Score (A/B/C/D)</td></tr>
+    <tr><td>20</td><td>Sparkline</td><td>Sparkline</td><td>LayerSignal</td><td>30-day price mini-chart</td></tr>
+</table>
+
+<div class="sub-heading">Expandable Rows</div>
+<div class="body-text">Clicking any row expands it in-place to reveal two sub-sections. The first is a Pool Breakdown showing which RSI pool the stock belongs to (based on RSI21/36/56 combinations) with a visual indicator of the pool's historical win rate. The second is Gate Details, showing the status of all 5 Apollo gates (regime, trend, momentum, volatility, quality) with pass/fail indicators and the specific values that determined each gate. This expansion avoids the need for a separate detail page and keeps the trader in the flow of scanning.</div>
+
+<div class="sub-heading">Feature-to-UI Mapping</div>
+<table class="mini-table">
+    <tr><th>Feature</th><th>UI Element</th><th>Location</th></tr>
+    <tr><td>Universe Scanning</td><td>Funnel bar + main table</td><td>Above and center of Screener</td></tr>
+    <tr><td>Multi-Stage Filtering</td><td>Left filter sidebar</td><td>Screener left panel</td></tr>
+    <tr><td>Composite Score Display</td><td>Score column with color tiers</td><td>Table column 3</td></tr>
+    <tr><td>Action Signal (Entry/Exit/Hold)</td><td>Badge column</td><td>Table column 4</td></tr>
+    <tr><td>Bucket Classification</td><td>Badge column</td><td>Table column 5</td></tr>
+    <tr><td>RSI Triple Display</td><td>3 color-coded numeric cells</td><td>Table columns 11-13</td></tr>
+    <tr><td>52-Week Position Bar</td><td>ProximityBar component</td><td>Table column 16</td></tr>
+    <tr><td>Gate Status Overview</td><td>Micro-dot cluster</td><td>Table column 9</td></tr>
+    <tr><td>Sparkline Preview</td><td>Sparkline component</td><td>Table column 20</td></tr>
+    <tr><td>Fundamental Quality</td><td>FQS badge</td><td>Table column 19</td></tr>
+    <tr><td>Row Expansion (Pool + Gates)</td><td>Expandable row panel</td><td>Below clicked row</td></tr>
+    <tr><td>Column Sorting</td><td>SortableTable header click</td><td>All sortable columns</td></tr>
+    <tr><td>Quick Filter Presets</td><td>Preset buttons in sidebar</td><td>Screener sidebar bottom</td></tr>
+</table>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 6</div>
+    <div class="section-title">Tab 2 -- Watchlist (P0)</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The Watchlist is the deep-dive view for monitored stocks, directly adopted from the LayerSignal v21 three-column layout. It is where a trader spends the most time per stock, analyzing RSI stacks, gate details, trade journals, and position sizing. The layout divides the viewport into three panels: a narrow stock list on the left, a primary analysis panel in the center, and a collapsible detail accordion on the right.</div>
+
+<div class="sub-heading">Three-Column Layout Wireframe</div>
+<div class="wireframe">
+    <div class="wireframe-row">
+        <div class="wireframe-box accent" style="flex:0 0 28%; min-height:200px;">LEFT (200-240px)<br>Stock List<br>Filter Pills<br>Sparklines<br>L-Badges<br>---<br>TCS<br>INFY<br>RELIANCE<br>HDFCBANK<br>...</div>
+        <div style="flex:0 0 8px;"></div>
+        <div class="wireframe-box green" style="flex:0 0 35%; min-height:200px;">CENTER PANEL<br>Throwback Alert Banner<br>---<br>4 Summary Cards:<br>Entry Score | Exit Pressure<br>Apollo Score | Conviction<br>---<br>Sub-tabs:<br>Chart | Analysis | Holdings</div>
+        <div style="flex:0 0 8px;"></div>
+        <div class="wireframe-box amber" style="flex:1; min-height:200px;">RIGHT (400-660px)<br>Collapsible Accordion:<br>1. RSI Stack<br>2. RSI Cushion<br>3. RSI Comparison<br>4. Position Sizer<br>5. Trade Journal<br>6. Score Breakdown<br>7. Gate Details<br>8. Entry/Exit Layers<br>9. Historical L3</div>
+    </div>
+</div>
+
+<div class="sub-heading">Left Panel -- Stock List</div>
+<div class="body-text">The left panel is 200-240px wide and displays the user's watchlist stocks as a scrollable list. Each stock entry shows the symbol in bold, a 30-day sparkline, and an L-bucket badge (L1-L4). Filter pills at the top allow quick filtering by bucket, action status, or custom tags. The currently selected stock is highlighted with a blue left border. This panel is always visible and acts as the stock selector for the center and right panels.</div>
+
+<div class="sub-heading">Center Panel -- Primary Analysis</div>
+<div class="body-text">The center panel is the main workspace. At the top, a conditional Throwback Alert Banner appears only when the selected stock is exhibiting throwback behavior (price returning to a recent breakout level). Below the banner, four summary StatCards are arranged in a 2x2 grid: Entry Score (Apollo composite, 0-100), Exit Pressure (percentage indicating exit signal strength), Apollo Score (backtest-validated score from profile analytics), and Conviction (0.0-1.0 confidence indicator). Below the stat cards, three sub-tabs provide different views: Chart (candlestick with overlays), Analysis (text-based signal breakdown), and Holdings (current position details if any).</div>
+
+<div class="sub-heading">Right Panel -- Detail Accordion (9 Sections)</div>
+<div class="body-text">The right panel is 400-660px wide and collapsible (it can be toggled to give more space to the center panel). It contains 9 AccordionPanel sections that expand and collapse independently. These sections are the core analytical toolkit and represent the deepest level of progressive disclosure in the dashboard.</div>
+<table class="mini-table">
+    <tr><th>#</th><th>Accordion Section</th><th>Content</th><th>Source</th></tr>
+    <tr><td>1</td><td>RSI Stack</td><td>RSI21, RSI36, RSI56 values with historical bands and overbought/oversold zones</td><td>LayerSignal</td></tr>
+    <tr><td>2</td><td>RSI Cushion</td><td>Distance from RSI to overbought (70) and oversold (30) levels per period</td><td>LayerSignal</td></tr>
+    <tr><td>3</td><td>RSI Comparison</td><td>Side-by-side comparison of RSI values across 3 timeframes with divergence detection</td><td>LayerSignal</td></tr>
+    <tr><td>4</td><td>Position Sizer</td><td>Risk-based position size calculator using ATR and account risk parameters</td><td>Apollo</td></tr>
+    <tr><td>5</td><td>Trade Journal</td><td>Historical trade log for this stock with entry/exit dates, prices, and outcomes</td><td>Apollo</td></tr>
+    <tr><td>6</td><td>Score Breakdown</td><td>Individual component scores that compose the composite entry score</td><td>Apollo</td></tr>
+    <tr><td>7</td><td>Gate Details</td><td>All 5 gates with pass/fail, values, and threshold explanations</td><td>Apollo</td></tr>
+    <tr><td>8</td><td>Entry/Exit Layers</td><td>Multi-layer entry and exit price levels with probability-weighted targets</td><td>Apollo</td></tr>
+    <tr><td>9</td><td>Historical L3</td><td>Past instances when this stock reached L3 bucket, with outcome tracking</td><td>LayerSignal</td></tr>
+</table>
+
+<div class="sub-heading">Feature-to-UI Mapping</div>
+<table class="mini-table">
+    <tr><th>Feature</th><th>UI Element</th><th>Location</th></tr>
+    <tr><td>Watchlist Stock Selection</td><td>Left panel stock list</td><td>Watchlist left panel</td></tr>
+    <tr><td>Quick Bucket Filtering</td><td>Filter pills</td><td>Left panel top</td></tr>
+    <tr><td>Throwback Alert</td><td>Conditional banner</td><td>Center panel top</td></tr>
+    <tr><td>Summary Score Cards</td><td>4x StatCard grid</td><td>Center panel below banner</td></tr>
+    <tr><td>Candlestick Chart</td><td>Chart sub-tab</td><td>Center panel sub-tabs</td></tr>
+    <tr><td>RSI Stack Visualization</td><td>Accordion section 1</td><td>Right panel</td></tr>
+    <tr><td>RSI Cushion Analysis</td><td>Accordion section 2</td><td>Right panel</td></tr>
+    <tr><td>Position Sizer</td><td>Accordion section 4</td><td>Right panel</td></tr>
+    <tr><td>Trade Journal</td><td>Accordion section 5</td><td>Right panel</td></tr>
+    <tr><td>Gate Detail Inspector</td><td>Accordion section 7</td><td>Right panel</td></tr>
+    <tr><td>Entry/Exit Layer Planning</td><td>Accordion section 8</td><td>Right panel</td></tr>
+    <tr><td>Historical L3 Tracking</td><td>Accordion section 9</td><td>Right panel</td></tr>
+</table>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 7</div>
+    <div class="section-title">Tab 3 -- Scanner (P1)</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The Scanner tab provides a complementary view to the Screener. While the Screener shows all signal-bearing stocks with their full data profiles, the Scanner focuses on specific pattern detection across the entire market. It uses predefined pattern presets that encapsulate common trading setups, allowing traders to quickly find stocks matching specific technical patterns without manually configuring filter combinations.</div>
+
+<div class="sub-heading">Scanner Layout Wireframe</div>
+<div class="wireframe">
+    <div class="wireframe-row">
+        <div class="wireframe-box accent" style="flex:0 0 25%; min-height:180px;">FILTER SIDEBAR<br>---<br>Pattern Presets:<br>[L3 Ready] [L2 Breakout]<br>[Throwback] [Momentum]<br>[Vol Breakout] [MA Cross]<br>[Fresh L3] [Oversold]<br>---<br>Universe Select<br>Min Score Slider<br>Min ADX Slider<br>Date Range</div>
+        <div style="flex:0 0 8px;"></div>
+        <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+            <div class="wireframe-box green" style="min-height:24px;">STAGE SUMMARY: L3 Ready:23 | L2 Breakout:45 | Throwback:12 | Momentum:67 | Vol Breakout:8 | MA Cross:34 | Fresh L3:5 | Oversold:15</div>
+            <div class="wireframe-box" style="min-height:130px;">RESULT TABLE -- matching stocks for selected preset<br>Symbol | Bucket | Score | RSI21 | RSI36 | ADX | ATR% | 52W Pos | Pattern Match | Sparkline</div>
+        </div>
+    </div>
+</div>
+
+<div class="sub-heading">Pattern Presets</div>
+<div class="body-text">Eight predefined pattern presets cover the most common trading setups in the Apollo-LayerSignal system. Each preset encapsulates a specific combination of indicator thresholds and conditions. The L3 Ready preset finds stocks approaching the L3 bucket (strong bullish momentum). The L2 Breakout preset identifies stocks breaking out from the L2 consolidation zone. The Throwback preset finds stocks pulling back to support after a breakout. The Momentum preset catches high-ADX stocks with strong directional movement. The Vol Breakout preset detects sudden expansion in ATR. The MA Cross preset finds stocks where short and long moving averages are crossing. The Fresh L3 preset shows stocks that just entered L3 today. The Oversold preset identifies heavily oversold conditions across all three RSI periods.</div>
+
+<div class="sub-heading">Stage Summary Bar</div>
+<div class="body-text">Above the result table, a horizontal summary bar shows the count of stocks matching each pattern preset in real time. This gives traders an instant market overview: a high count in L3 Ready suggests many stocks are approaching strong buy zones, while a high Vol Breakout count suggests the market is entering a period of increased volatility. Clicking any count in the summary bar switches to that preset and filters the table.</div>
+
+<div class="sub-heading">Feature-to-UI Mapping</div>
+<table class="mini-table">
+    <tr><th>Feature</th><th>UI Element</th><th>Location</th></tr>
+    <tr><td>Pattern Preset Selection</td><td>Preset buttons in sidebar</td><td>Scanner left panel</td></tr>
+    <tr><td>Custom Filter Controls</td><td>Sliders and selectors</td><td>Scanner sidebar below presets</td></tr>
+    <tr><td>Pattern Match Summary</td><td>Stage summary bar</td><td>Above result table</td></tr>
+    <tr><td>Pattern Result Table</td><td>SortableTable</td><td>Scanner right content</td></tr>
+    <tr><td>Quick Watchlist Add</td><td>Row action button</td><td>Table row hover</td></tr>
+</table>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 8</div>
+    <div class="section-title">Tab 4 -- Analytics (P0)</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The Analytics tab is the Apollo engine's primary showcase, presenting backtesting results, behavioral profiles, walk-forward validation, cross-reports, and fundamental data in five sub-tabs. This is where the quant-oriented trader spends time validating strategies, reviewing historical performance, and understanding the statistical properties of the trading system.</div>
+
+<div class="sub-heading">Sub-Tab Structure</div>
+<div class="pill-row">
+    <div class="pill" style="border-color:var(--blue);color:var(--blue);">Trade Engine</div>
+    <div class="pill">Profiles</div>
+    <div class="pill">Walk-Forward</div>
+    <div class="pill">Cross-Report</div>
+    <div class="pill">Fundamentals</div>
+</div>
+
+<div class="sub-heading">Trade Engine Sub-Tab</div>
+<div class="wireframe">
+    <div class="wireframe-row">
+        <div class="wireframe-box green" style="flex:1; min-height:36px;">4 Aggregate StatCards: Total Trades | Win Rate | Profit Factor | Max Drawdown</div>
+    </div>
+    <div class="wireframe-row">
+        <div class="wireframe-box accent" style="flex:1; min-height:60px;">EXIT MODE CHART -- Pie/donut showing distribution of exit types (Target Hit, Stop Loss, Time Exit, Signal Exit)</div>
+    </div>
+    <div class="wireframe-row">
+        <div class="wireframe-box" style="flex:1; min-height:60px;">EQUITY CURVE -- Line chart showing portfolio value over time with drawdown overlay</div>
+    </div>
+    <div class="wireframe-row">
+        <div class="wireframe-box" style="flex:1; min-height:70px;">TRADE LOG TABLE -- Expandable rows with entry/exit dates, prices, P&L, holding period, exit mode</div>
+    </div>
+</div>
+<div class="body-text">The Trade Engine sub-tab opens with four aggregate StatCards at the top: Total Trades (integer count), Win Rate (percentage with color coding), Profit Factor (ratio with benchmark comparison), and Max Drawdown (percentage with severity indicator). Below the stats, an Exit Mode chart shows the distribution of exit types as a donut chart, helping traders understand whether the system tends to exit via targets, stop losses, time-based exits, or signal reversals. The Equity Curve shows the portfolio value over the full backtest period with a drawdown overlay shaded in red. Finally, the Trade Log is a sortable table with expandable rows showing detailed trade information.</div>
+
+<div class="sub-heading">Profiles Sub-Tab</div>
+<div class="body-text">The Profiles sub-tab displays behavioral profile reports generated by Apollo's profile_analytics.py module. Each stock in the watchlist has a profile that captures its typical post-entry behavior: average holding period, most common exit mode, MAE (Maximum Adverse Excursion) distribution, MFE (Maximum Favorable Excursion) distribution, and win rate by bucket. Profiles are displayed as card grids with each stock's profile in a dedicated card, enabling cross-stock comparison.</div>
+
+<div class="sub-heading">Walk-Forward Sub-Tab</div>
+<div class="body-text">The Walk-Forward sub-tab presents the results of Apollo's walk-forward validation engine. This tab shows how the trading system performs on out-of-sample data across multiple rolling windows. Key metrics include rolling win rates, stability scores (variance of performance across windows), and parameter sensitivity analysis. The tab uses a combination of line charts (for rolling metrics over time) and summary tables (for aggregate statistics). This is critical for verifying that the system is not overfit to historical data.</div>
+
+<div class="sub-heading">Feature-to-UI Mapping</div>
+<table class="mini-table">
+    <tr><th>Feature</th><th>UI Element</th><th>Sub-Tab</th></tr>
+    <tr><td>Aggregate Trade Statistics</td><td>4x StatCard grid</td><td>Trade Engine</td></tr>
+    <tr><td>Exit Mode Distribution</td><td>Donut chart</td><td>Trade Engine</td></tr>
+    <tr><td>Equity Curve</td><td>Line chart with drawdown</td><td>Trade Engine</td></tr>
+    <tr><td>Trade Log with Details</td><td>SortableTable with expand</td><td>Trade Engine</td></tr>
+    <tr><td>Behavioral Profile Cards</td><td>Card grid per stock</td><td>Profiles</td></tr>
+    <tr><td>MAE/MFE Distributions</td><td>Histogram charts</td><td>Profiles</td></tr>
+    <tr><td>Win Rate by Bucket</td><td>Bar chart / table</td><td>Profiles</td></tr>
+    <tr><td>Profile Comparison</td><td>Side-by-side cards</td><td>Profiles</td></tr>
+    <tr><td>Walk-Forward Rolling Metrics</td><td>Multi-line chart</td><td>Walk-Forward</td></tr>
+    <tr><td>Stability Score Display</td><td>StatCard with gauge</td><td>Walk-Forward</td></tr>
+    <tr><td>Parameter Sensitivity</td><td>Heatmap table</td><td>Walk-Forward</td></tr>
+    <tr><td>Cross-Report Summary</td><td>Combined stats table</td><td>Cross-Report</td></tr>
+    <tr><td>Regime-Adjusted Performance</td><td>Grouped bar chart</td><td>Cross-Report</td></tr>
+    <tr><td>Fundamental Data Table</td><td>SortableTable</td><td>Fundamentals</td></tr>
+    <tr><td>Score vs. Fundamentals Scatter</td><td>Scatter plot</td><td>Fundamentals</td></tr>
+</table>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 9</div>
+    <div class="section-title">Tab 5 -- Guidance (P1)</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The Guidance tab provides post-trade behavioral analysis and actionable recommendations. It is designed for traders who want to understand not just what to trade, but how to manage positions based on historical behavior patterns. This tab draws heavily from Apollo's guidance engine, which analyzes past trades to generate probabilistic recommendations for current positions.</div>
+
+<div class="sub-heading">Guidance Layout Wireframe</div>
+<div class="wireframe">
+    <div class="wireframe-row">
+        <div class="wireframe-box accent" style="flex:0 0 25%; min-height:200px;">STOCK SELECTOR<br>---<br>Currently Held<br>TCS<br>INFY<br>RELIANCE<br>---<br>Recently Closed<br>HDFCBANK<br>ICICIBANK</div>
+        <div style="flex:0 0 8px;"></div>
+        <div style="flex:1; display:flex; flex-wrap:wrap; gap:8px;">
+            <div class="wireframe-box green" style="flex:1 1 45%; min-height:90px;">BEHAVIORAL PROFILE<br>Avg Hold: 12 days<br>Typical Exit: Target Hit<br>Win Rate: 68%</div>
+            <div class="wireframe-box amber" style="flex:1 1 45%; min-height:90px;">GUIDANCE RECOMMENDATIONS<br>Hold signal strong<br>Move SL to cost<br>Next target: EL2</div>
+            <div class="wireframe-box" style="flex:1 1 45%; min-height:90px;">MAE/MFE DISTRIBUTION<br>Histogram showing adverse<br>and favorable excursion<br>distribution for this stock</div>
+            <div class="wireframe-box" style="flex:1 1 45%; min-height:90px;">DIVERGENCE RE-ENTRY<br>RSI divergence detected<br>at current levels<br>Historical re-entry rate: 42%</div>
+        </div>
+    </div>
+</div>
+
+<div class="sub-heading">Behavioral Profile Section</div>
+<div class="body-text">The Behavioral Profile card shows the selected stock's historical trading behavior based on Apollo's profile_analytics.py output. It displays the average holding period, the most common exit mode, the win rate for this specific stock, and how it compares to the system-wide average. This section answers the question: "When I trade this stock, what typically happens?" It helps traders set realistic expectations and adjust position sizes based on historical behavior.</div>
+
+<div class="sub-heading">Guidance Recommendations</div>
+<div class="body-text">The Recommendations card provides specific, actionable guidance for the current position (or the most recent position if none is active). Recommendations are generated by Apollo's guidance engine and include suggestions like "hold signal remains strong," "consider moving stop-loss to cost," or "next target level is EL2 based on historical layer progression." Each recommendation is tagged with a confidence level derived from the historical frequency of that recommendation leading to a positive outcome.</div>
+
+<div class="sub-heading">MAE/MFE Distribution</div>
+<div class="body-text">The MAE/MFE Distribution section shows histograms of Maximum Adverse Excursion and Maximum Favorable Excursion for the selected stock. MAE tells the trader how much the stock typically moves against them before reversing (informing stop-loss placement), while MFE tells how much the stock typically moves in their favor before reversing (informing target placement). These distributions are generated from the mae_mfe.py module and provide statistically grounded position management guidance.</div>
+
+<div class="sub-heading">Divergence Re-Entry Analytics</div>
+<div class="body-text">This section detects RSI divergence patterns at the current price level and compares them against historical instances where similar divergences occurred. It shows the historical re-entry success rate (percentage of times a divergence led to a profitable re-entry) and the typical holding period after re-entry. This is particularly useful for traders who exited a position and are evaluating whether to re-enter at the current level.</div>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 10</div>
+    <div class="section-title">Tab 6 -- Alerts (P0)</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The Alerts tab is the chronological notification center for the entire system. It aggregates alerts from both the Apollo and LayerSignal engines, as well as system-level notifications, into a single unified feed. Unlike traditional dashboards that scatter alerts across multiple views, this design centralizes all notifications in one place while allowing filtering by source, type, and time range.</div>
+
+<div class="sub-heading">Alerts Layout Wireframe</div>
+<div class="wireframe">
+    <div class="wireframe-row">
+        <div class="wireframe-box green" style="flex:1; min-height:30px;">FILTER BAR: Source [All | Apollo | LayerSignal | System] | Type [All | Entry | Exit | Regime | Scoring | System] | Date Range | Mark All Read</div>
+    </div>
+    <div class="wireframe-row">
+        <div class="wireframe-box" style="flex:1; min-height:150px;">CHRONOLOGICAL ALERT FEED<br>---<br>14:32 [Apollo] TCS -- Entry signal generated, Score: 82, Bucket: L2<br>14:28 [LayerSignal] RELIANCE -- RSI21 crossed above 60, Renko: Green<br>14:15 [System] Apollo scan completed, 1240 stocks processed in 3.2s<br>14:02 [Apollo] INFY -- Exit signal, Target hit at 1845, P&L: +3.2%<br>13:55 [LayerSignal] HDFCBANK -- L3 bucket reached, ADX: 34<br>13:40 [System] Data feed heartbeat OK, next refresh at 14:00<br>...</div>
+    </div>
+</div>
+
+<div class="sub-heading">Alert Sources</div>
+<div class="body-text">Three alert sources populate the feed. Apollo alerts include entry signal generation, exit signal triggers (target hit, stop loss, time exit), scoring changes, and gate status transitions. LayerSignal alerts include bucket changes (especially L2 to L3 transitions), RSI threshold crossings, Renko brick changes, and throwback pattern detections. System alerts include engine scan completion notifications, data feed health checks, and error conditions. Each alert in the feed displays its source as a colored prefix badge (purple for Apollo, green for LayerSignal, teal for System).</div>
+
+<div class="sub-heading">Alert Types and Interaction</div>
+<div class="body-text">Alerts are categorized into five types: Entry (new trading opportunity), Exit (position closure signal), Regime (market regime change), Scoring (significant score movement), and System (operational status). The filter bar at the top allows combining source and type filters for precise alert isolation. Each alert card is clickable, navigating to the relevant stock in the Watchlist tab or the relevant section in the System tab. Unread alerts show a blue left border indicator. The feed auto-scrolls to the latest alert but preserves the user's scroll position when they are reading historical alerts.</div>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 11</div>
+    <div class="section-title">Tab 7 -- System (P2)</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The System tab provides operational visibility into the engines, data pipelines, and overall health of the dashboard. It is the lowest-priority tab (P2) because it is not part of the daily trading workflow, but it is essential for debugging, maintenance, and ensuring data quality. The layout uses a card grid pattern to present status information clearly.</div>
+
+<div class="sub-heading">System Layout Wireframe</div>
+<div class="wireframe">
+    <div class="wireframe-row">
+        <div class="wireframe-box green" style="flex:1; min-height:80px;">APOLLO ENGINE STATUS<br>Last Scan: 14:32 | Duration: 3.2s<br>Stocks Processed: 1240<br>Status: <span style="color:#22C55E;">HEALTHY</span></div>
+        <div class="wireframe-box accent" style="flex:1; min-height:80px;">LAYERSIGNAL ENGINE STATUS<br>Last Scan: 14:35 | Duration: 1.8s<br>Patterns Detected: 209<br>Status: <span style="color:#22C55E;">HEALTHY</span></div>
+        <div class="wireframe-box teal-border" style="flex:1; min-height:80px; border-color:var(--teal);">DATA HEALTH<br>DB Size: 847 MB | Tables: 26<br>Last Update: 14:35<br>Stale Data: 0 tables</div>
+    </div>
+    <div class="wireframe-row">
+        <div class="wireframe-box" style="flex:1; min-height:80px;">API ENDPOINTS<br>GET /api/screener -- 200 OK<br>GET /api/watchlist/{symbol} -- 200 OK<br>GET /api/analytics/trades -- 200 OK<br>GET /api/alerts -- 200 OK</div>
+        <div class="wireframe-box" style="flex:1; min-height:80px;">SCORE DISTRIBUTION<br>Histogram showing distribution of<br>composite scores across the universe<br>Mean: 45.2 | Median: 42.0<br>Std Dev: 18.3</div>
+    </div>
+</div>
+
+<div class="sub-heading">Engine Status Cards</div>
+<div class="body-text">Three primary status cards show the real-time health of each engine and the data layer. The Apollo Engine card displays the timestamp and duration of the last scan cycle, the number of stocks processed, and a health indicator (green/amber/red). The LayerSignal Engine card shows equivalent information for the live scanning engine. The Data Health card shows the SQLite database size, the number of tables (26), the timestamp of the last data update, and a count of any tables with stale data (data older than the expected refresh interval). Any card showing amber or red status can be clicked to reveal detailed diagnostic information.</div>
+
+<div class="sub-heading">Detail Cards</div>
+<div class="body-text">Below the status cards, two detail cards provide additional operational context. The API Endpoints card lists all REST API endpoints served by the FastAPI backend, their current response status, and average response time. This helps identify any API degradation. The Score Distribution card shows a histogram of composite scores across the entire universe, along with statistical summaries (mean, median, standard deviation). This helps identify whether the scoring system is producing well-distributed outputs or if there is skew that might indicate a calibration issue.</div>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 12</div>
+    <div class="section-title">Cross-Cutting Design Patterns</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">This chapter defines the interaction patterns, state displays, and responsive behaviors that apply uniformly across all seven tabs. Consistency in these patterns is critical for a dashboard that will be used for hours at a time, as even minor inconsistencies in interaction behavior create cognitive friction that compounds over a trading session.</div>
+
+<div class="sub-heading">Interaction Patterns</div>
+<table class="mini-table">
+    <tr><th>Interaction</th><th>Trigger</th><th>Response</th><th>Timing</th></tr>
+    <tr><td><strong>Hover</strong></td><td>Mouse over data cell</td><td>Tooltip with full value, definition, and source engine</td><td>150ms delay, 200ms fade-in</td></tr>
+    <tr><td><strong>Click</strong></td><td>Single click on row</td><td>Expand row in-place (Screener/Scanner) or select stock (Watchlist)</td><td>Instant</td></tr>
+    <tr><td><strong>Double-click</strong></td><td>Double click on symbol</td><td>Navigate to Watchlist tab with that stock selected</td><td>Instant</td></tr>
+    <tr><td><strong>Expand</strong></td><td>Click accordion header</td><td>Toggle accordion section open/closed with animation</td><td>250ms slide</td></tr>
+    <tr><td><strong>Collapse</strong></td><td>Click accordion header or panel toggle</td><td>Collapse right panel in Watchlist to give more center space</td><td>300ms slide</td></tr>
+    <tr><td><strong>Sort</strong></td><td>Click table column header</td><td>Sort table by that column, toggle asc/desc</td><td>Instant with 150ms highlight</td></tr>
+    <tr><td><strong>Filter</strong></td><td>Toggle filter pill or adjust slider</td><td>Filter table/fed in real-time without page reload</td><td>100ms debounce</td></tr>
+    <tr><td><strong>Search</strong></td><td>Type in global search</td><td>Show autocomplete dropdown with matching symbols and features</td><td>200ms debounce</td></tr>
+</table>
+
+<div class="sub-heading">Loading, Error, and Empty States</div>
+<div class="body-text">Loading states use skeleton screens that mirror the final layout structure. Rather than showing a spinner, the table rows, card grids, and chart areas display pulsing placeholder shapes that match the dimensions of the expected content. This reduces perceived load time and prevents layout shift when data arrives. Error states appear inline (not as modal dialogs) with a red-tinted bar at the top of the affected section, showing the error message and a retry button. System-level errors also push an alert to the Alerts tab. Empty states show a centered illustration with a brief message explaining why no data is displayed (for example, "No stocks match the current filter" or "No backtest results available for the selected date range") along with a suggested action button.</div>
+<div class="body-text">Toast notifications appear in the bottom-right corner for transient events: successful data refresh, alert count changes, and background task completions. Toasts auto-dismiss after 4 seconds with a manual dismiss option. They are non-blocking and stack vertically if multiple toasts are active simultaneously. The toast uses the semantic color of the event: green for success, amber for warning, red for error, and blue for informational.</div>
+
+<div class="sub-heading">Responsive Behavior</div>
+<div class="body-text">The dashboard is optimized for two primary breakpoints. At 1920px (full HD), all three Watchlist panels are visible with comfortable spacing, the Screener shows all 20+ columns without horizontal scrolling, and charts render at full detail. At 1366px (common laptop resolution), the Watchlist right panel auto-collapses and can be toggled, the Screener table enables horizontal scrolling for columns beyond the viewport, and charts reduce their detail level. The dashboard does not support mobile or tablet viewports as trading dashboards require precise data reading that is impractical on small screens.</div>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 13</div>
+    <div class="section-title">Architecture-to-UI Requirement Mapping</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">This chapter provides a comprehensive mapping from the backend engine outputs (Python modules and JavaScript code) to their specific UI locations in the dashboard. This mapping serves as the implementation bridge between the engineering architecture and the front-end design. Each row identifies the source module, the specific data it produces, and the exact UI element that consumes it.</div>
+
+<div class="sub-heading">scoring.py Outputs</div>
+<table class="mini-table">
+    <tr><th>Output</th><th>UI Location</th><th>Tab</th></tr>
+    <tr><td>Composite score (0-100)</td><td>Score column in Screener table</td><td>Screener</td></tr>
+    <tr><td>Individual component scores</td><td>Score Breakdown accordion</td><td>Watchlist</td></tr>
+    <tr><td>Action signal (Entry/Exit/Hold)</td><td>Action badge column</td><td>Screener, Watchlist</td></tr>
+    <tr><td>Conviction score</td><td>Conviction MetricBadge</td><td>Screener, Watchlist</td></tr>
+</table>
+
+<div class="sub-heading">trade_engine.py Outputs</div>
+<table class="mini-table">
+    <tr><th>Output</th><th>UI Location</th><th>Tab</th></tr>
+    <tr><td>Trade log (entry/exit dates, prices, P&L)</td><td>Trade Log table with expandable rows</td><td>Analytics</td></tr>
+    <tr><td>Aggregate statistics (win rate, profit factor)</td><td>4x StatCard grid</td><td>Analytics</td></tr>
+    <tr><td>Exit mode distribution</td><td>Exit Mode donut chart</td><td>Analytics</td></tr>
+    <tr><td>Equity curve data</td><td>Equity Curve line chart</td><td>Analytics</td></tr>
+</table>
+
+<div class="sub-heading">profile_analytics.py Outputs</div>
+<table class="mini-table">
+    <tr><th>Output</th><th>UI Location</th><th>Tab</th></tr>
+    <tr><td>Behavioral profile (avg hold, typical exit, win rate)</td><td>Profile card in card grid</td><td>Analytics (Profiles)</td></tr>
+    <tr><td>MAE/MFE distributions</td><td>Histogram charts</td><td>Analytics (Profiles), Guidance</td></tr>
+    <tr><td>Win rate by bucket</td><td>Bar chart</td><td>Analytics (Profiles)</td></tr>
+</table>
+
+<div class="sub-heading">walk_forward_validator.py Outputs</div>
+<table class="mini-table">
+    <tr><th>Output</th><th>UI Location</th><th>Tab</th></tr>
+    <tr><td>Rolling window metrics</td><td>Multi-line chart</td><td>Analytics (Walk-Forward)</td></tr>
+    <tr><td>Stability score</td><td>StatCard with MiniGauge</td><td>Analytics (Walk-Forward)</td></tr>
+    <tr><td>Parameter sensitivity matrix</td><td>Heatmap table</td><td>Analytics (Walk-Forward)</td></tr>
+</table>
+
+<div class="sub-heading">cross_report_pipeline.py Outputs</div>
+<table class="mini-table">
+    <tr><th>Output</th><th>UI Location</th><th>Tab</th></tr>
+    <tr><td>Combined Apollo + LayerSignal report</td><td>Cross-Report stats table</td><td>Analytics (Cross-Report)</td></tr>
+    <tr><td>Market regime label</td><td>Market Regime Banner</td><td>Global (all tabs)</td></tr>
+    <tr><td>Regime-adjusted performance</td><td>Grouped bar chart</td><td>Analytics (Cross-Report)</td></tr>
+    <tr><td>Unified signal summary</td><td>Summary cards in Watchlist</td><td>Watchlist</td></tr>
+</table>
+
+<div class="sub-heading">indicators.py Outputs</div>
+<table class="mini-table">
+    <tr><th>Output</th><th>UI Location</th><th>Tab</th></tr>
+    <tr><td>RSI values (21, 36, 56 period)</td><td>RSI color-coded columns</td><td>Screener, Watchlist, Scanner</td></tr>
+    <tr><td>ADX value</td><td>ADX data column</td><td>Screener, Scanner</td></tr>
+    <tr><td>ATR and ATR% value</td><td>ATR% data column</td><td>Screener, Watchlist, Scanner</td></tr>
+    <tr><td>52-week position data</td><td>ProximityBar component</td><td>Screener, Watchlist</td></tr>
+    <tr><td>Renko brick data</td><td>Renko badge</td><td>Screener, Watchlist, Scanner</td></tr>
+</table>
+
+<div class="sub-heading">LayerSignal JS Engine Outputs</div>
+<table class="mini-table">
+    <tr><th>Output</th><th>UI Location</th><th>Tab</th></tr>
+    <tr><td>Bucket classification (L1-L4)</td><td>Bucket badge column</td><td>Screener, Watchlist</td></tr>
+    <tr><td>Pattern detection results</td><td>Scanner result table</td><td>Scanner</td></tr>
+    <tr><td>Live RSI stack data</td><td>RSI Stack accordion</td><td>Watchlist</td></tr>
+    <tr><td>Throwback pattern alerts</td><td>Throwback Alert Banner</td><td>Watchlist</td></tr>
+</table>
+
+<div class="sub-heading">Both Engines -- Shared Outputs</div>
+<table class="mini-table">
+    <tr><th>Output</th><th>UI Location</th><th>Tab</th></tr>
+    <tr><td>Alert events (entry, exit, regime, scoring)</td><td>Chronological alert feed</td><td>Alerts</td></tr>
+    <tr><td>Engine health status</td><td>Engine status cards</td><td>System</td></tr>
+    <tr><td>Data timestamps</td><td>Timestamps throughout UI</td><td>All tabs</td></tr>
+</table>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 14</div>
+    <div class="section-title">Design Decisions</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">This chapter documents the eight key design decisions made during the creation of this specification. Each decision is presented as a card with its title, the rationale behind the choice, and whether it was adopted directly from an existing source (Apollo architecture document or LayerSignal v21) or adapted with modifications. These decisions represent the points where this specification intentionally diverges from or extends its source materials.</div>
+
+<div class="decision-card">
+    <div class="card-title">1. Task-Based Tabs (Not Engine-Based)</div>
+    <div class="decision-meta">Status: <span class="badge badge-red">Departure</span> from Architecture Document</div>
+    <div class="card-body">The architecture document proposed an engine-mode toggle that would switch the entire dashboard between Apollo and LayerSignal views. This specification rejects that approach in favor of task-based tabs (Screener, Watchlist, Scanner, etc.). Rationale: Traders think in terms of tasks, not engines. A trader wants to "check my watchlist" or "scan for new opportunities," not "use Apollo." The task-based structure also enables seamless mixing of both engines' outputs in a single view (e.g., the Screener table showing Apollo scores alongside LayerSignal RSI values).</div>
+</div>
+
+<div class="decision-card green-border">
+    <div class="card-title">2. Three-Column Watchlist Layout</div>
+    <div class="decision-meta">Status: <span class="badge badge-green">Adopted</span> from LayerSignal v21</div>
+    <div class="card-body">The three-column layout (stock list, center panel, detail accordion) is directly adopted from the existing LayerSignal v21 interface. This decision was made because the current LayerSignal layout already represents months of iterative refinement based on daily usage feedback. The right panel is made collapsible (not fixed) to accommodate smaller screens, which is an adaptation from the original fixed-width design.</div>
+</div>
+
+<div class="decision-card amber-border">
+    <div class="card-title">3. Combined Screener Table</div>
+    <div class="decision-meta">Status: <span class="badge badge-amber">Adapted</span> from both sources</div>
+    <div class="card-body">The architecture document described separate Apollo and LayerSignal screener views. This specification combines them into a single table with 20+ columns. Rationale: Splitting the screener by engine would force traders to check two separate views and mentally merge the results. A combined table with sortable columns lets traders see the full picture in one place. The column ordering follows the LayerSignal convention (RSI values in green/blue/amber) while adding Apollo columns (score, gates, conviction) to the right.</div>
+</div>
+
+<div class="decision-card green-border">
+    <div class="card-title">4. RSI Color Lock</div>
+    <div class="decision-meta">Status: <span class="badge badge-green">Adopted</span> from LayerSignal v21</div>
+    <div class="card-body">The RSI color assignments (RSI21=green, RSI36=blue, RSI56=amber) are locked and must not be changed. These colors are burned into trader muscle memory from months of LayerSignal usage. Any change would cause immediate confusion and slow down signal recognition. This is a non-negotiable constraint that overrides any aesthetic considerations.</div>
+</div>
+
+<div class="decision-card purple-border">
+    <div class="card-title">5. Dark Blue Theme</div>
+    <div class="decision-meta">Status: <span class="badge badge-amber">Adapted</span> from LayerSignal dark mode</div>
+    <div class="card-body">LayerSignal used a generic dark gray theme. This specification adapts it to a dark blue theme (using the #0B1120 to #475569 range from Tailwind's slate palette). Rationale: Blue undertones reduce eye strain more effectively than neutral gray during extended screen sessions, and they provide a distinctive visual identity that differentiates this dashboard from the many gray-dark trading interfaces in the market. The blue theme also creates better contrast with the green/red signal colors.</div>
+</div>
+
+<div class="decision-card">
+    <div class="card-title">6. Badge-First Visual Grammar</div>
+    <div class="decision-meta">Status: <span class="badge badge-green">Adopted + Expanded</span> from LayerSignal v21</div>
+    <div class="card-body">LayerSignal introduced the concept of color-coded badges for bucket classification (L1-L4). This specification expands the badge system to cover all categorical data: action signals (Entry/Exit/Hold), FQS grades (A/B/C/D), entry layers (EL1-EL4), Renko states, and alert types. The badge grammar is consistent: green for bullish/positive, red for bearish/negative, amber for caution/neutral, blue for informational, and purple for Apollo-specific data.</div>
+</div>
+
+<div class="decision-card teal-border">
+    <div class="card-title">7. Flags Inform, Never Gate</div>
+    <div class="decision-meta">Status: <span class="badge badge-green">Adopted</span> from Architecture Document</div>
+    <div class="card-body">The architecture document established the principle that binary flags (such as IPO restriction, regime mismatch, or data staleness) inform the trader but never prevent them from seeing a signal. This specification enforces this principle by displaying flags as informational FlagChip components (small on/off indicators) rather than using them as filter gates. A stock with an active IPO flag will still appear in the Screener table with the flag visible, allowing the trader to make an informed decision rather than having the system silently suppress it.</div>
+</div>
+
+<div class="decision-card green-border">
+    <div class="card-title">8. Footer Ticker Tape</div>
+    <div class="decision-meta">Status: <span class="badge badge-green">Adapted</span> from LayerSignal v21</div>
+    <div class="card-body">The scrolling ticker tape at the bottom of the viewport is adopted from LayerSignal v21. This specification expands it from the original 8 indices to 14 indices for broader market coverage. The ticker provides constant market context without requiring the trader to navigate away from their current tab. It uses the NSE data feed engine for real-time index values and auto-scrolls horizontally when the content exceeds the viewport width.</div>
+</div>
+
+<div class="chapter-header">
+    <div class="section-tag">Chapter 15</div>
+    <div class="section-title">Implementation Priority</div>
+    <div class="divider"></div>
+</div>
+<div class="body-text">The 101 features are organized into four implementation phases based on priority and dependency. Phase A is the minimum viable dashboard and must be completed first. It contains all P0 features across the four P0 tabs (Screener, Watchlist, Analytics, and Alerts) plus the global shell components. Phases B through D add progressively lower-priority features that enhance the dashboard but are not required for initial deployment.</div>
+
+<div class="sub-heading">Phase A -- Minimum Viable Dashboard (46 features)</div>
+<div class="body-text">Phase A implements the four P0 tabs (Screener, Watchlist, Analytics, Alerts) with their core features, plus the global shell (App Bar, Tab Bar, Regime Banner, Ticker Footer). This phase delivers a fully functional trading dashboard that covers the primary daily workflow: scan the universe for signals, deep-dive into watchlist stocks, review backtest analytics, and monitor alerts. The combined Screener table, three-column Watchlist, Trade Engine sub-tab, and unified alert feed are the centerpiece deliverables of this phase.</div>
+<div class="pill-row">
+    <span class="badge badge-green">P0 -- 46 features</span>
+    <span class="badge" style="background:rgba(34,197,94,0.1);color:#22C55E;border:1px solid rgba(34,197,94,0.3);">Screener: 13 features</span>
+    <span class="badge" style="background:rgba(34,197,94,0.1);color:#22C55E;border:1px solid rgba(34,197,94,0.3);">Watchlist: 12 features</span>
+    <span class="badge" style="background:rgba(34,197,94,0.1);color:#22C55E;border:1px solid rgba(34,197,94,0.3);">Analytics: 15 features</span>
+    <span class="badge" style="background:rgba(34,197,94,0.1);color:#22C55E;border:1px solid rgba(34,197,94,0.3);">Alerts: 6 features</span>
+</div>
+
+<div class="sub-heading">Phase B -- Enhanced Workflow (33 features)</div>
+<div class="body-text">Phase B adds the two P1 tabs (Scanner and Guidance) with their full feature sets. The Scanner provides pattern-based market scanning with 8 presets, complementing the Screener's score-based approach. The Guidance tab adds post-trade behavioral analysis and recommendations, transforming the dashboard from a signal display tool into a complete trading decision support system. This phase also includes enhanced interaction patterns like advanced filtering, saved views, and keyboard shortcuts.</div>
+<div class="pill-row">
+    <span class="badge badge-amber">P1 -- 33 features</span>
+    <span class="badge" style="background:rgba(245,158,11,0.1);color:#F59E0B;border:1px solid rgba(245,158,11,0.3);">Scanner: 5 features</span>
+    <span class="badge" style="background:rgba(245,158,11,0.1);color:#F59E0B;border:1px solid rgba(245,158,11,0.3);">Guidance: 4 features</span>
+    <span class="badge" style="background:rgba(245,158,11,0.1);color:#F59E0B;border:1px solid rgba(245,158,11,0.3);">Cross-cutting: 24 features</span>
+</div>
+
+<div class="sub-heading">Phase C -- Operational Tooling (19 features)</div>
+<div class="body-text">Phase C implements the P2 System tab with engine health monitoring, API endpoint status, and score distribution analytics. It also includes data export capabilities (CSV and PDF report generation), advanced configuration options, and performance optimization features. This phase is essential for long-term maintainability and operational visibility but is not required for the initial trader-facing deployment.</div>
+<div class="pill-row">
+    <span class="badge badge-purple">P2 -- 19 features</span>
+    <span class="badge" style="background:rgba(167,139,250,0.1);color:#A78BFA;border:1px solid rgba(167,139,250,0.3);">System: 8 features</span>
+    <span class="badge" style="background:rgba(167,139,250,0.1);color:#A78BFA;border:1px solid rgba(167,139,250,0.3);">Export/Config: 11 features</span>
+</div>
+
+<div class="sub-heading">Phase D -- Future Enhancements (3 features)</div>
+<div class="body-text">Phase D contains P3 features that are deferred to a future roadmap. These include multi-monitor support for traders running multiple screens, advanced collaboration features (shared watchlists and annotations), and a mobile-friendly read-only view for checking alerts on the go. These features are documented here for completeness but are explicitly out of scope for the initial implementation.</div>
+<div class="pill-row">
+    <span class="badge badge-blue">P3 -- 3 features</span>
+</div>
+
+<div class="sub-heading">Phase Summary</div>
+<table class="mini-table">
+    <tr><th>Phase</th><th>Priority</th><th>Features</th><th>Key Deliverables</th></tr>
+    <tr><td><strong>A</strong></td><td><span class="badge badge-green">P0</span></td><td class="mono">46</td><td>Screener, Watchlist, Analytics, Alerts, Global Shell</td></tr>
+    <tr><td><strong>B</strong></td><td><span class="badge badge-amber">P1</span></td><td class="mono">33</td><td>Scanner, Guidance, Advanced Interactions</td></tr>
+    <tr><td><strong>C</strong></td><td><span class="badge badge-purple">P2</span></td><td class="mono">19</td><td>System Tab, Export, Configuration</td></tr>
+    <tr><td><strong>D</strong></td><td><span class="badge badge-blue">P3</span></td><td class="mono">3</td><td>Multi-monitor, Collaboration, Mobile Read-only</td></tr>
+    <tr><td><strong>Total</strong></td><td></td><td class="mono" style="font-weight:700;">101</td><td>Complete Unified Dashboard</td></tr>
+</table>
+
+</div>
+<div class="ending">
+    <div class="ending-text">
+        <span class="highlight">101</span> features.<br>
+        <span class="highlight">7</span> tabs.<br>
+        <span class="highlight">26</span> SQLite tables.<br>
+        <span class="highlight">2</span> engines.<br>
+        <span class="highlight">1</span> unified interface.
+    </div>
+</div>
+
+</body></html>
